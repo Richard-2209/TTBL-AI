@@ -7,9 +7,12 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from statsmodels.tsa.api import ExponentialSmoothing, SimpleExpSmoothing, Holt
 import os
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from getpass import getpass
 
 # Verbindung zur Datenbank
-engine = create_engine("mysql+pymysql://Richard:Oskartoni4481@localhost:3306/Table_Tennis")
+password = getpass("Enter database password: ")
+engine = create_engine(f"mysql+pymysql://Richard:{password}@localhost:3306/Table_Tennis")
 
 # SQL-Datei laden und ausführen
 try:
@@ -138,8 +141,6 @@ results_df = results_df.merge(teams_df[['id', 'name']], left_on='team_id', right
 results_df = results_df.drop_duplicates(subset="team_id", keep="first")
 results_df['predicted_position'] = results_df['predicted_position'].round(2)
 results_df = results_df.sort_values('predicted_position').reset_index(drop=True)
-
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # Tatsächliche Werte
 y_test = test_data['target_position']
