@@ -164,7 +164,7 @@ vergleich_df['predicted_position_24_25'] = vergleich_df['predicted_position_24_2
 vergleich_df = vergleich_df.drop_duplicates(subset='team_id', keep='first')
 vergleich_df = vergleich_df.sort_values(by='actual_position_24_25').reset_index(drop=True)
 
-print("\n📊 Vergleich: Prognose vs. Realität (Saison 2024/25):")
+print("\n Vergleich: Prognose vs. Realität (Saison 2024/25):")
 print(vergleich_df)
 
 # -----------------------------
@@ -191,7 +191,7 @@ final_results = pd.concat([results_df[['team_id', 'name', 'predicted_position']]
 final_results = final_results.drop_duplicates(subset='team_id', keep='first')
 final_results = final_results.sort_values('predicted_position').reset_index(drop=True)
 
-# ✅ Finale Ausgabe
-print("\n📊 Prognostizierte Tabelle 2025/26 (inkl. Fallback für neue Teams):")
+# Finale Ausgabe
+print("\n Prognostizierte Tabelle 2025/26 (inkl. Fallback für neue Teams):")
 print(final_results)
 # %%
