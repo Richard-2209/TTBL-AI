@@ -11,8 +11,9 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from getpass import getpass
 
 # Verbindung zur Datenbank
+username = getpass("Enter database username: ")
 password = getpass("Enter database password: ")
-engine = create_engine(f"mysql+pymysql://Richard:{password}@localhost:3306/Table_Tennis")
+engine = create_engine(f"mysql+pymysql://{username}:{password}@localhost:3306/Table_Tennis")
 
 # SQL-Datei laden und ausführen
 try:
@@ -89,7 +90,6 @@ axes[1].set_xlabel("Saison")
 
 plt.tight_layout()
 plt.show()
-
 
 input("Press Enter to continue...")  # Pauses the program until Enter is pressed
 
