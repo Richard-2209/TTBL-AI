@@ -150,7 +150,7 @@ mae = mean_absolute_error(y_test, y_pred_25_26)
 mse = mean_squared_error(y_test, y_pred_25_26)
 r2 = r2_score(y_test, y_pred_25_26)
 
-print("\n📈 Modellbewertung auf Testdaten (2024/25):")
+print("\n Modellbewertung auf Testdaten (2024/25):")
 print(f"Mean Absolute Error (MAE): {mae:.2f}")
 print(f"Mean Absolute Error (MSE): {mae:.2f}")
 print(f"R²-Score: {r2:.2f}")
