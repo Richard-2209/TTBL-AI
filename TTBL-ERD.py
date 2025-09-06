@@ -43,7 +43,7 @@ dot.node('Players', '''{
 
 # Beziehungen
 dot.edge('SeasonResults', 'Teams', label="N:1")
-dot.edge('SeasonResults', 'Seasons', label="N:1")
+dot.edge('SeasonResults', 'Seasons', label="1:1")
 dot.edge('Players', 'Teams', label="N:1")
 dot.edge('Players', 'Seasons', label="N:1")
 
