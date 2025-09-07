@@ -1,7 +1,6 @@
+-- DROP TABLE Players;
 -- DROP TABLE SeasonResults;
--- DROP TABLE Seasons;
 -- DROP TABLE Teams;
--- DROP TABLE Players
 
 -- Table for Teams --
 CREATE TABLE IF NOT EXISTS Teams (
@@ -51,7 +50,7 @@ CREATE TABLE IF NOT EXISTS SeasonResults (
     losses INT DEFAULT 0,
     points INT DEFAULT 0,
     UNIQUE (season, team_id),
-    UNIQUE (season_id, team_id), -- <--- das muss hinzugefügt werden
+    UNIQUE (season_id, team_id), 
     FOREIGN KEY (team_id) REFERENCES Teams(id) ON DELETE CASCADE
 );
 

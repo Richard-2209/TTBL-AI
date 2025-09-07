@@ -10,12 +10,12 @@ import os
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from getpass import getpass
 
-# Verbindung zur Datenbank
+# Database connection
 username = getpass("Enter database username: ")
 password = getpass("Enter database password: ")
 engine = create_engine(f"mysql+pymysql://{username}:{password}@localhost:3306/Table_Tennis")
 
-# SQL-Datei laden und ausführen
+# Load and execute SQL file
 try:
     with open("Table_Tennis.sql", "r", encoding="utf-8") as file:
         sql_script = file.read()
@@ -25,13 +25,13 @@ try:
                 if stmt:
                     connection.execute(stmt)
 except Exception as e:
-    print(f"Fehler beim Laden oder Ausführen des SQL-Skripts: {e}")
+    print(f"Error loading or executing the SQL script: {e}")
 
-# Daten laden
+# Load data
 df = pd.read_sql("SELECT * FROM SeasonResults", engine)
 teams_df = pd.read_sql("SELECT * FROM Teams", engine)
 
-# Teamnamen ergänzen
+# Add team names
 df = df.merge(teams_df, left_on="team_id", right_on="id", suffixes=("", "_team"))
 df['team_name'] = df['name']
 df['season_id'] = df['season'].map({
@@ -41,36 +41,36 @@ df['season_id'] = df['season'].map({
 df = df.dropna(subset=['season_id'])
 df = df.sort_values(by='season_id')
 
-# Nur Team-IDs < 11 plotten
+# Plot only team IDs < 11
 filtered_df = df[df['team_id'] < 11]
 
-# Subplots: Tatsächliche Positionen + Trendlinien
+# Subplots: Actual positions + trend lines
 fig, axes = plt.subplots(2, 1, figsize=(12, 16))
 
-# Tatsächliche Positionen
+# Actual positions
 for team_name in filtered_df['team_name'].unique():
     team_data = filtered_df[filtered_df['team_name'] == team_name]
     axes[0].plot(team_data['season_id'], team_data['position'], label=team_name)
 
-axes[0].set_title("Tatsächliche Positionen")
-axes[0].set_ylabel("Platzierung")
+axes[0].set_title("Actual Positions")
+axes[0].set_ylabel("Ranking")
 axes[0].invert_yaxis()
 axes[0].grid(True)
 axes[0].legend(loc='upper left', bbox_to_anchor=(1, 1))
 
-# Lineare Trends
-# for team_name in filtered_df['team_name'].unique():
-#     team_data = filtered_df[filtered_df['team_name'] == team_name].dropna(subset=['season_id', 'position'])
-#     team_data = team_data.sort_values(by='season_id')
-#     if len(team_data) > 2:  # Ensure there are enough data points for a moving average
-#         team_data['moving_avg'] = team_data['position'].rolling(window=3).mean()
-#         axes[1].plot(team_data['season_id'], team_data['moving_avg'], linestyle='--', label=f"{team_name} (Moving Avg)")
+# Linear trends
+for team_name in filtered_df['team_name'].unique():
+    team_data = filtered_df[filtered_df['team_name'] == team_name].dropna(subset=['season_id', 'position'])
+    team_data = team_data.sort_values(by='season_id')
+    if len(team_data) > 2:  # Ensure there are enough data points for a moving average
+        team_data['moving_avg'] = team_data['position'].rolling(window=3).mean()
+        axes[1].plot(team_data['season_id'], team_data['moving_avg'], linestyle='--', label=f"{team_name} (Moving Avg)")
 
 fit_ = {}  # Initialize fit_ as a dictionary
 for team_name in filtered_df['team_name'].unique():
     team_data = filtered_df[filtered_df['team_name'] == team_name]
     valid_positions = team_data['position'].dropna()
-    if len(valid_positions) < 2:  # Ensure there are enough data points to fit the model
+    if len(valid_positions) < 10:  # Ensure there are enough data points for heuristic initialization
         print(f"Skipping team {team_name} due to insufficient valid position data.")
         continue
     fit_[team_name] = Holt(valid_positions, initialization_method='heuristic').fit(
@@ -81,12 +81,12 @@ for team_name in filtered_df['team_name'].unique():
     if team_name in fit_:
         axes[1].plot(team_data['season_id'], fit_[team_name].fittedvalues, label=team_name, linestyle='--')
 
-axes[1].set_title("Moving averages")
-axes[1].set_ylabel("Platzierung")
+axes[1].set_title("Moving Averages")
+axes[1].set_ylabel("Ranking")
 axes[1].invert_yaxis()
 axes[1].grid(True)
 axes[1].legend(loc='upper left', bbox_to_anchor=(1, 1))
-axes[1].set_xlabel("Saison")
+axes[1].set_xlabel("Season")
 
 plt.tight_layout()
 plt.show()
@@ -114,7 +114,7 @@ def compute_features(df):
 
 features_df = compute_features(df)
 
-# Training + Testdaten
+# Training + test data
 train_data = features_df[features_df['season'] < '2024/25']
 test_data = features_df[features_df['season'] == '2024/25']
 
@@ -126,55 +126,55 @@ model.fit(X_train, y_train)
 
 print("Feature importances:", model.feature_importances_)
 
-# Prognose 2025/26 (auf Basis von 2024/25-Daten)
+# Prediction for 2025/26 (based on 2024/25 data)
 prediction_input = test_data.drop(columns=['season', 'team_id', 'target_position'])
 y_pred_25_26 = model.predict(prediction_input)
 
-# Ergebnisse vorbereiten
+# Prepare results
 results_df = test_data[['team_id']].copy()
 results_df['predicted_position'] = y_pred_25_26
 
-# Teamnamen hinzufügen
+# Add team names
 results_df = results_df.merge(teams_df[['id', 'name']], left_on='team_id', right_on='id', how='left')
 
-# Nur eindeutige Teams
+# Only unique teams
 results_df = results_df.drop_duplicates(subset="team_id", keep="first")
 results_df['predicted_position'] = results_df['predicted_position'].round(2)
 results_df = results_df.sort_values('predicted_position').reset_index(drop=True)
 
-# Tatsächliche Werte
+# Actual values
 y_test = test_data['target_position']
 
-# Modellgüte auf Testdaten
+# Model evaluation on test data
 mae = mean_absolute_error(y_test, y_pred_25_26)
 mse = mean_squared_error(y_test, y_pred_25_26)
 r2 = r2_score(y_test, y_pred_25_26)
 
-print("\n Modellbewertung auf Testdaten (2024/25):")
+print("\n Model evaluation on test data (2024/25):")
 print(f"Mean Absolute Error (MAE): {mae:.2f}")
 print(f"Mean Absolute Error (MSE): {mae:.2f}")
 print(f"R²-Score: {r2:.2f}")
 
-# Vergleichstabelle
-vergleich_df = test_data[['team_id', 'target_position']].copy()
-vergleich_df['predicted_position'] = y_pred_25_26
-vergleich_df = vergleich_df.merge(teams_df[['id', 'name']], left_on='team_id', right_on='id', how='left')
-vergleich_df = vergleich_df[['team_id', 'name', 'target_position', 'predicted_position']]
-vergleich_df.columns = ['team_id', 'team_name', 'actual_position_24_25', 'predicted_position_24_25']
-vergleich_df['predicted_position_24_25'] = vergleich_df['predicted_position_24_25'].round(2)
-vergleich_df = vergleich_df.drop_duplicates(subset='team_id', keep='first')
-vergleich_df = vergleich_df.sort_values(by='actual_position_24_25').reset_index(drop=True)
+# Comparison table
+comparison_df = test_data[['team_id', 'target_position']].copy()
+comparison_df['predicted_position'] = y_pred_25_26
+comparison_df = comparison_df.merge(teams_df[['id', 'name']], left_on='team_id', right_on='id', how='left')
+comparison_df = comparison_df[['team_id', 'name', 'target_position', 'predicted_position']]
+comparison_df.columns = ['team_id', 'team_name', 'actual_position_24_25', 'predicted_position_24_25']
+comparison_df['predicted_position_24_25'] = comparison_df['predicted_position_24_25'].round(2)
+comparison_df = comparison_df.drop_duplicates(subset='team_id', keep='first')
+comparison_df = comparison_df.sort_values(by='actual_position_24_25').reset_index(drop=True)
 
-print("\n Vergleich: Prognose vs. Realität (Saison 2024/25):")
-print(vergleich_df)
+print("\n Comparison: Prediction vs. Reality (Season 2024/25):")
+print(comparison_df)
 
 # -----------------------------
-# Zusätzlicher Schritt: Handle Teams mit < 3 Saisons automatisch
+# Additional step: Handle teams with < 3 seasons automatically
 # -----------------------------
 team_counts = df.groupby("team_id")["season_id"].nunique()
 teams_with_few_data = team_counts[team_counts < 3].index.tolist()
 
-# Hole letzte bekannte Position (2024/25) für diese Teams
+# Get last known position (2024/25) for these teams
 fallback_preds = df[df['season'] == '2024/25'][['team_id', 'position']]
 fallback_preds = fallback_preds[fallback_preds['team_id'].isin(teams_with_few_data)]
 fallback_preds = fallback_preds.rename(columns={'position': 'predicted_position'})
@@ -182,17 +182,17 @@ fallback_preds = fallback_preds.merge(teams_df[['id', 'name']], left_on='team_id
 fallback_preds = fallback_preds[['team_id', 'name', 'predicted_position']]
 fallback_preds['predicted_position'] = fallback_preds['predicted_position'].round(2)
 
-# Entferne diese Teams aus ML-Vorhersage
+# Remove these teams from ML prediction
 results_df = results_df[~results_df['team_id'].isin(teams_with_few_data)]
 
-# Füge Fallbacks hinzu
+# Add fallbacks
 final_results = pd.concat([results_df[['team_id', 'name', 'predicted_position']], fallback_preds])
 
-# Aufräumen
+# Cleanup
 final_results = final_results.drop_duplicates(subset='team_id', keep='first')
 final_results = final_results.sort_values('predicted_position').reset_index(drop=True)
 
-# Finale Ausgabe
-print("\n Prognostizierte Tabelle 2025/26 (inkl. Fallback für neue Teams):")
+# Final output
+print("\n Predicted Table 2025/26 (including fallback for new teams):")
 print(final_results)
 # %%
