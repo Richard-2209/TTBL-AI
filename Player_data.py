@@ -3,7 +3,7 @@ from getpass import getpass
 import mysql.connector
 
 # Excel-Datei einlesen
-excel_file = "/Users/richardmohling/Desktop/Tryout/Table Tennis/Daten/Spielerdaten.xlsx"  # Pfad zur Excel-Datei
+excel_file = "/Users/richardmohling/Desktop/Tryout/TTBL-AI/Spielerdaten.xlsx"  # Pfad zur Excel-Datei
 data = pd.read_excel(excel_file)
 
 # Verbindung zur Datenbank herstellen

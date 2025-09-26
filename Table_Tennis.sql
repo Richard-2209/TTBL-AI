@@ -230,7 +230,7 @@ CREATE TABLE IF NOT EXISTS Players (
     id INT PRIMARY KEY AUTO_INCREMENT,
     season_id INT NOT NULL,
     team_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
     world_ranking INT,
     wins INT DEFAULT 0,
     losses INT DEFAULT 0,
@@ -239,3 +239,5 @@ CREATE TABLE IF NOT EXISTS Players (
     FOREIGN KEY (season_id, team_id) REFERENCES SeasonResults(season_id, team_id) ON DELETE CASCADE,
     UNIQUE (season_id, team_id, name)
 );
+
+DELETE FROM Players 
