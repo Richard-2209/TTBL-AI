@@ -3,7 +3,7 @@ from getpass import getpass
 import mysql.connector
 
 # Excel-Datei einlesen
-excel_file = "/Users/richardmohling/Desktop/Tryout/TTBL-AI/Spielerdaten.xlsx"  # Pfad zur Excel-Datei
+excel_file = "/Users/richardmohling/Desktop/Tryout/TTBL-AI/Player_data.xlsx"  # Pfad zur Excel-Datei
 data = pd.read_excel(excel_file)
 
 # Verbindung zur Datenbank herstellen
@@ -34,7 +34,7 @@ for index, row in data.iterrows():
         values = (row['name'], row['season_id'], row['team_id'], row['world_ranking'], row['wins'], row['losses'])
         cursor.execute(sql, values)
     elif result[0] == 1:
-        print(f"{row['name']} already exists in the database")
+        print(f"{row['name']} with season id {row['season_id']} already exists in the database")
 
 # Änderungen speichern und Verbindung schließen
 db_connection.commit()
