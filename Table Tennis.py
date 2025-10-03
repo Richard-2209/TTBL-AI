@@ -15,18 +15,6 @@ username = getpass("Enter database username: ")
 password = getpass("Enter database password: ")
 engine = create_engine(f"mysql+pymysql://{username}:{password}@localhost:3306/Table_Tennis")
 
-# Load and execute SQL file
-try:
-    with open("Table_Tennis.sql", "r", encoding="utf-8") as file:
-        sql_script = file.read()
-        with engine.connect() as connection:
-            for statement in sql_script.split(";"):
-                stmt = statement.strip()
-                if stmt:
-                    connection.execute(stmt)
-except Exception as e:
-    print(f"Error loading or executing the SQL script: {e}")
-
 # Load data
 df = pd.read_sql("SELECT * FROM SeasonResults", engine)
 teams_df = pd.read_sql("SELECT * FROM Teams", engine)
@@ -65,21 +53,6 @@ for team_name in filtered_df['team_name'].unique():
     if len(team_data) > 2:  # Ensure there are enough data points for a moving average
         team_data['moving_avg'] = team_data['position'].rolling(window=3).mean()
         axes[1].plot(team_data['season_id'], team_data['moving_avg'], linestyle='--', label=f"{team_name} (Moving Avg)")
-
-fit_ = {}  # Initialize fit_ as a dictionary
-for team_name in filtered_df['team_name'].unique():
-    team_data = filtered_df[filtered_df['team_name'] == team_name]
-    valid_positions = team_data['position'].dropna()
-    if len(valid_positions) < 10:  # Ensure there are enough data points for heuristic initialization
-        print(f"Skipping team {team_name} due to insufficient valid position data.")
-        continue
-    fit_[team_name] = Holt(valid_positions, initialization_method='heuristic').fit(
-        smoothing_level=0.8, smoothing_trend=0.2, optimized=True
-    )
-
-for team_name in filtered_df['team_name'].unique():
-    if team_name in fit_:
-        axes[1].plot(team_data['season_id'], fit_[team_name].fittedvalues, label=team_name, linestyle='--')
 
 axes[1].set_title("Moving Averages")
 axes[1].set_ylabel("Ranking")
