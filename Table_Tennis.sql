@@ -239,5 +239,3 @@ CREATE TABLE IF NOT EXISTS Players (
     FOREIGN KEY (season_id, team_id) REFERENCES SeasonResults(season_id, team_id) ON DELETE CASCADE,
     UNIQUE (season_id, team_id, name)
 );
-
-DELETE FROM Players 
